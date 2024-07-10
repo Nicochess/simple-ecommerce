@@ -1,9 +1,9 @@
-import Breadcrumbs from "@/components/Breadcrumbs";
 import GlobalApi from "@/utils/GlobalApi";
 import React, { useEffect, useState } from "react";
 import Banner from "./_components/Banner";
 import DetailsInfo from "./_components/DetailsInfo";
 import ProductList from "@/components/ProductList";
+import Breadcrumbs from "./_components/Breadcrumbs";
 
 type Props = {
   params: DetailParams;

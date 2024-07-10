@@ -3,7 +3,7 @@
 import { Cart, useCart } from "@/context/CartContext";
 import GlobalApi from "@/utils/GlobalApi";
 import { useUser } from "@clerk/nextjs";
-import { ShoppingCart } from "lucide-react";
+import { LoaderCircle, ShoppingCart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 
@@ -16,37 +16,47 @@ const DetailsInfo: React.FC<Props> = ({ product }) => {
   const { cart, addCartItem } = useCart();
   const router = useRouter();
 
+  type UserType = typeof user;
+
+  const addProductToCart = async (user: NonNullable<UserType>) => {
+    const body = {
+      data: {
+        username: user.fullName,
+        email: user.primaryEmailAddress?.emailAddress,
+        products: [product],
+      },
+    };
+    try {
+      let res;
+
+      if (cart?.id) {
+        res = await GlobalApi.addToCart(cart.id, {
+          data: {
+            products: [...cart.attributes.products, product],
+          },
+        });
+
+        addCartItem(product);
+      } else {
+        res = await GlobalApi.createCart(body);
+        addCartItem(product);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const [isAddingProductToCart, setIsAddingProductToCart] =
+    React.useState(false);
+
   const onAddToCart = async () => {
     if (user) {
-      const body = {
-        data: {
-          username: user.fullName,
-          email: user.primaryEmailAddress?.emailAddress,
-          products: [product],
-        },
-      };
-      try {
-        let res;
-
-        if (cart?.id) {
-          res = await GlobalApi.addToCart(cart.id, {
-            data: {
-              products: [...cart.attributes.products, product],
-            },
-          });
-
-          addCartItem(product);
-        } else {
-          res = await GlobalApi.createCart(body);
-          addCartItem(product);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-      return;
+      setIsAddingProductToCart(true);
+      await addProductToCart(user);
+      setIsAddingProductToCart(false);
+    } else {
+      router.push("/sign-in");
     }
-
-    router.push("/sign-in");
   };
 
   return (
@@ -64,7 +74,8 @@ const DetailsInfo: React.FC<Props> = ({ product }) => {
           className="flex border rounded-lg gap-2 py-4 px-10 bg-teal-500 text-white"
           onClick={() => onAddToCart()}
         >
-          <ShoppingCart /> Add to Cart
+          {isAddingProductToCart ? <LoaderCircle className="animate-spin" /> : <ShoppingCart />}
+          Add to Cart
         </button>
       </div>
     </div>
@@ -72,3 +83,4 @@ const DetailsInfo: React.FC<Props> = ({ product }) => {
 };
 
 export default DetailsInfo;
+ 
